@@ -448,32 +448,42 @@
             const widgetId = 'musicWidget';
             const storageKey = 'musicWidgetPos';
 
-            // create widget DOM
+            // create widget DOM (themed)
             const widget = document.createElement('div');
             widget.id = widgetId;
             widget.innerHTML = `
-                <button class="mw-handle" aria-label="Drag music control">♪</button>
+                <button class="mw-handle" aria-label="Drag music control" title="Drag to move">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 4v16l12-8L6 4z" fill="currentColor"/></svg>
+                </button>
                 <div class="mw-controls" aria-hidden="true">
                     <div class="mw-desc">my fav music</div>
                     <div style="display:flex;gap:8px;align-items:center;">
-                        <button class="mw-play" aria-pressed="false">Play</button>
-                        <label style="display:flex;gap:6px;align-items:center;font-size:13px;color:var(--muted)">Vol<input class="mw-vol" type="range" min="0" max="1" step="0.01" value="0.5"/></label>
+                        <button class="mw-play" aria-pressed="false" title="Play/Pause">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 4v16l12-8L6 4z" fill="currentColor"/></svg>
+                        </button>
+                        <label style="display:flex;gap:6px;align-items:center;font-size:13px;color:var(--muted)">Vol
+                            <input class="mw-vol" type="range" min="0" max="1" step="0.01" value="0.5"/>
+                        </label>
                     </div>
                     <div class="mw-status" style="font-size:12px;color:var(--muted);margin-top:6px"></div>
                 </div>
             `;
             document.body.appendChild(widget);
 
-            // styles
+            // themed styles for the widget
             const style = document.createElement('style');
             style.textContent = `
                 #${widgetId}{position:fixed;right:18px;bottom:18px;z-index:9999;display:flex;flex-direction:column;align-items:flex-end}
-                #${widgetId} .mw-handle{width:44px;height:44px;border-radius:999px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--card);border:0;display:grid;place-items:center;box-shadow:0 10px 30px rgba(2,6,23,0.12);cursor:grab}
-                #${widgetId} .mw-controls{background:var(--card);border-radius:10px;padding:10px;margin-top:8px;box-shadow:0 12px 30px rgba(2,6,23,0.12);border:1px solid rgba(0,0,0,0.06);min-width:180px}
+                #${widgetId} .mw-handle{width:48px;height:48px;border-radius:999px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--card);border:0;display:grid;place-items:center;box-shadow:0 10px 30px rgba(2,6,23,0.12);cursor:grab}
+                #${widgetId} .mw-handle svg{display:block}
+                #${widgetId} .mw-controls{background:var(--card);border-radius:12px;padding:10px;margin-top:10px;box-shadow:0 12px 30px rgba(2,6,23,0.10);border:1px solid rgba(0,0,0,0.06);min-width:200px;color:var(--text)}
                 #${widgetId} .mw-controls{display:none}
                 #${widgetId}.open .mw-controls{display:block}
-                #${widgetId} .mw-play{background:transparent;border:1px solid rgba(0,0,0,0.06);padding:6px 10px;border-radius:8px;cursor:pointer}
-                #${widgetId} .mw-vol{width:90px}
+                #${widgetId} .mw-desc{font-weight:700;margin-bottom:6px}
+                #${widgetId} .mw-play{background:linear-gradient(90deg,rgba(139,31,46,0.06),transparent);border:0;padding:8px;border-radius:8px;cursor:pointer;color:var(--accent);display:grid;place-items:center}
+                #${widgetId} .mw-play svg{display:block}
+                #${widgetId} .mw-vol{width:110px}
+                @media (max-width:600px){ #${widgetId}{right:12px;bottom:12px} }
             `;
             document.head.appendChild(style);
 
@@ -546,53 +556,46 @@
             }
             tryLoadNext();
 
-            // play/pause
+            // play/pause handling using media events
             let playing = false;
-            async function playAudio(){
-                try{
-                    await audio.play();
-                    playing = true; playBtn.textContent = 'Pause'; playBtn.setAttribute('aria-pressed','true'); status.textContent = 'Playing';
-                }catch(err){
-                    status.textContent = 'Playback blocked — tap to allow';
+            function setPlayingState(state){
+                playing = state;
+                if(playing){
+                    playBtn.setAttribute('aria-pressed','true');
+                    playBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 4h4v16H6zM14 4h4v16h-4z" fill="currentColor"/></svg>`;
+                } else {
+                    playBtn.setAttribute('aria-pressed','false');
+                    playBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 4v16l12-8L6 4z" fill="currentColor"/></svg>`;
                 }
             }
-            function pauseAudio(){ audio.pause(); playing = false; playBtn.textContent = 'Play'; playBtn.setAttribute('aria-pressed','false'); status.textContent = 'Paused'; }
+
+            function bindMediaEvents(m){
+                if(!m) return;
+                m.addEventListener('play', ()=> setPlayingState(true));
+                m.addEventListener('playing', ()=> setPlayingState(true));
+                m.addEventListener('pause', ()=> setPlayingState(false));
+                m.addEventListener('ended', ()=> setPlayingState(false));
+                m.addEventListener('error', ()=> { status.textContent = 'Playback error'; });
+            }
 
             playBtn.addEventListener('click', async (e)=>{
                 e.stopPropagation();
                 if(!audio){ status.textContent = 'No media available yet'; return; }
-                // attempt playback even if canplay hasn't fired; browsers require user gesture which this is
                 try{
-                    await audio.play();
-                    playing = true; playBtn.textContent = 'Pause'; playBtn.setAttribute('aria-pressed','true'); status.textContent = 'Playing';
-                }catch(err){
-                    status.textContent = 'Playback blocked — tap to allow';
-                }
+                    if(audio.paused){
+                        await audio.play();
+                    } else {
+                        audio.pause();
+                    }
+                }catch(err){ status.textContent = 'Playback blocked — tap to allow'; }
             });
 
-            // --- DEBUG helper: visible test audio player to verify browser can play the file ---
-            const debugWrap = document.createElement('div');
-            debugWrap.style.position = 'fixed';
-            debugWrap.style.left = '12px';
-            debugWrap.style.bottom = '12px';
-            debugWrap.style.zIndex = 9998;
-            debugWrap.style.background = 'rgba(255,255,255,0.95)';
-            debugWrap.style.padding = '6px';
-            debugWrap.style.borderRadius = '8px';
-            debugWrap.style.boxShadow = '0 6px 18px rgba(2,6,23,0.08)';
-            debugWrap.innerHTML = `
-                <div style="font-size:13px;margin-bottom:6px;color:var(--muted)">Debug: test player</div>
-                <audio id="debugPlayer" controls style="max-width:260px;display:block">
-                    <source src="assets/Love's Train.mp3" type="audio/mpeg">
-                    <source src="assets/Love%27s%20Train.mp3" type="audio/mpeg">
-                    Your browser does not support the audio element.
-                </audio>`;
-            document.body.appendChild(debugWrap);
-            const dbg = document.getElementById('debugPlayer');
-            dbg.addEventListener('canplay', ()=>{ console.info('Debug player canplay'); status.textContent = 'Debug player can play the mp3'; });
-            dbg.addEventListener('error', ()=>{ console.error('Debug player error — browser cannot play assets/Love\'s Train.mp3'); status.textContent = 'Debug player error — cannot play assets/Love\'s Train.mp3'; });
+            // bind media events if/when audio becomes available
+            const mediaReadyCheck = setInterval(()=>{
+                if(audio){ bindMediaEvents(audio); clearInterval(mediaReadyCheck); }
+            }, 300);
 
-            volInput.addEventListener('input', ()=>{ audio.volume = parseFloat(volInput.value); });
+            volInput.addEventListener('input', ()=>{ if(audio) audio.volume = parseFloat(volInput.value); });
 
             // Toggle controls on handle click (single click)
             handle.addEventListener('click', (e)=>{ e.stopPropagation(); widget.classList.toggle('open'); });
