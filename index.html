@@ -1,0 +1,527 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Paul Teves Portfolio</title>
+    <meta name="description" content="Single-page portfolio: About, Projects, Skills, Contact" />
+    <style>
+        :root{
+            --bg:#f6efe9; --card:#fff; --text:#0f1724; --muted:#6b4b4b; --accent:#8b1f2e; --accent2:#f5a623;
+            --glass: rgba(255,255,255,0.6);
+        }
+        [data-theme="dark"]{
+            --bg:#1a0b0d; --card:#0f0a0b; --text:#f6efe9; --muted:#cdb7b7; --accent:#b02a37; --accent2:#f5a623; --glass: rgba(255,255,255,0.03);
+        }
+        *{box-sizing:border-box}
+        html,body{height:100%;margin:0;font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;color:var(--text);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+        /* Layered, animated background with soft colorful blobs */
+        html,body{
+            background:
+                radial-gradient(600px 400px at 10% 10%, rgba(139,31,46,0.10), transparent 10%),
+                radial-gradient(500px 300px at 90% 80%, rgba(245,166,35,0.08), transparent 18%),
+                linear-gradient(180deg,var(--bg),color-mix(in srgb,var(--bg) 80%,transparent));
+            background-attachment:fixed;
+        }
+        body::before{
+            content:"";
+            position:fixed;
+            inset:-20% -20% -20% -20%;
+            background:
+                radial-gradient(circle at 20% 30%, rgba(139,31,46,0.12), transparent 18%),
+                radial-gradient(circle at 80% 60%, rgba(245,166,35,0.10), transparent 22%);
+            filter:blur(70px) saturate(120%);
+            z-index:-1;
+            pointer-events:none;
+            animation:float 24s linear infinite;
+            transform-origin:center;
+        }
+        @keyframes float{
+            0%{transform:translateY(0) rotate(0deg)}
+            50%{transform:translateY(-6%) rotate(180deg)}
+            100%{transform:translateY(0) rotate(360deg)}
+        }
+        header{position:sticky;top:0;backdrop-filter: blur(6px);background:var(--glass);border-bottom:1px solid rgba(0,0,0,0.05);z-index:50}
+        .container{max-width:1100px;margin:0 auto;padding:0 20px}
+        nav{display:flex;align-items:center;justify-content:space-between;padding:12px 0}
+        .brand{display:flex;gap:12px;align-items:center}
+        .logo{width:42px;height:42px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center;color:var(--card);font-weight:700}
+        .navlinks{display:flex;gap:14px;align-items:center}
+        .navlinks a{color:var(--muted);text-decoration:none;padding:8px;border-radius:8px;font-weight:600}
+        .navlinks a.active{color:var(--accent);background:linear-gradient(90deg,transparent,rgba(0,0,0,0.03));}
+        .theme-toggle{background:transparent;border:0;padding:8px;border-radius:8px;color:var(--muted);cursor:pointer}
+
+        /* Hero */
+        .hero{display:grid;grid-template-columns:1fr 420px;gap:36px;align-items:start;padding:56px 0}
+        .hero aside.card{width:100%;align-self:start}
+        /* Make the hero feel more 'landscape' on wide screens by nudging the card visually */
+        .hero aside.card{transform:translateY(0)}
+        /* Allow the .section-inner wrapper inside .hero to be transparent to the grid layout */
+        .hero > .section-inner{display:contents}
+        .intro{max-width:680px}
+        .eyebrow{display:inline-block;padding:6px 10px;background:linear-gradient(90deg,var(--accent),var(--accent2));color:var(--card);border-radius:999px;font-weight:700;font-size:13px}
+        h1{margin:18px 0 8px;font-size:clamp(28px,5vw,44px);line-height:1.02}
+        p.lead{color:var(--muted);margin:12px 0 18px}
+        .cta{display:flex;gap:10px;align-items:center}
+        .btn{background:var(--accent);color:var(--card);padding:10px 14px;border-radius:10px;border:0;cursor:pointer;font-weight:700}
+        .secondary{background:transparent;border:1px solid rgba(0,0,0,0.06);color:var(--muted)}
+
+        /* Card with photo */
+        .card{background:var(--card);border-radius:14px;padding:18px;box-shadow:0 6px 20px rgba(2,6,23,0.06);border:1px solid rgba(0,0,0,0.03)}
+        .avatar{width:100%;display:grid;place-items:center}
+        .avatar img{width:180px;height:180px;border-radius:14px;object-fit:cover;border:6px solid rgba(255,255,255,0.06);box-shadow:0 12px 30px rgba(2,6,23,0.25)}
+        .quote{font-style:italic;color:var(--muted);margin-top:10px}
+
+        section{padding:40px 0}
+        /* Section panels to visually separate content */
+        .section-inner{background:var(--card);padding:28px;border-radius:12px;box-shadow:0 10px 30px rgba(2,6,23,0.06);border:1px solid rgba(0,0,0,0.04);}
+        /* Alternate tone for every other section for clear contrast */
+        main.container > section:nth-of-type(even) .section-inner{background: color-mix(in srgb, var(--card) 94%, rgba(176,42,55,0.03));}
+        /* Slightly darker panels in dark theme */
+        [data-theme="dark"] main.container > section:nth-of-type(even) .section-inner{background: color-mix(in srgb, var(--card) 86%, rgba(176,42,55,0.06));}
+       
+           /* Connect section container: use the same panel style as other sections */
+           main.container > section#connect .section-inner{
+               background:var(--card);
+               border-radius:12px;
+               padding:28px;
+               border:1px solid rgba(0,0,0,0.04);
+               box-shadow:0 10px 30px rgba(2,6,23,0.06);
+           }
+        .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+        .skills{display:flex;flex-wrap:wrap;gap:10px}
+        .pill{background:linear-gradient(90deg,rgba(0,0,0,0.03),transparent);padding:8px 12px;border-radius:999px;color:var(--muted);font-weight:700}
+
+        /* Projects */
+        .project{display:flex;gap:18px;border-radius:12px;overflow:hidden;border:1px solid rgba(0,0,0,0.04);align-items:center}
+        /* Bigger, themed thumbnails with soft shadow and rounded corners */
+        .thumb{width:260px;height:160px;background:linear-gradient(180deg,rgba(139,31,46,0.10),transparent);display:grid;place-items:center;overflow:hidden;flex:0 0 260px;border-radius:10px;box-shadow:0 10px 30px rgba(2,6,23,0.08)}
+        .thumb img{width:100%;height:100%;object-fit:cover;display:block;transform:scale(1);transition:transform .6s cubic-bezier(.2,.9,.3,1);}
+        .project:hover .thumb img{transform:scale(1.06)}
+        .project-content{flex:1}
+
+        @media (max-width:900px){
+            .project{flex-direction:column;align-items:stretch}
+            .thumb{width:100%;height:220px;flex:0 0 auto;border-radius:8px}
+        }
+        .project-content{padding:14px}
+
+        /* Social connect - unified, matching other panels */
+        .social-grid{display:flex;flex-wrap:wrap;gap:12px;margin-top:14px}
+        .social-card{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:linear-gradient(180deg, rgba(0,0,0,0.02), transparent);box-shadow:0 8px 18px rgba(2,6,23,0.06);text-decoration:none;color:var(--text);transition:transform .18s ease,box-shadow .18s ease;border:1px solid rgba(0,0,0,0.04)}
+        .social-card:hover{transform:translateY(-6px);box-shadow:0 18px 40px rgba(2,6,23,0.12)}
+        .social-icon{width:48px;height:48px;flex:0 0 48px;border-radius:12px;display:grid;place-items:center;color:var(--card);box-shadow:0 8px 18px rgba(0,0,0,0.06)}
+        .social-icon svg{width:22px;height:22px;display:block}
+        /* Force SVG shapes to use the icon color for reliable contrast */
+        .social-icon svg *{fill:currentColor;stroke:none}
+        .social-label{font-weight:800;color:var(--accent)}
+        .social-card .muted{color:var(--muted);font-weight:600}
+        .social-facebook{background:linear-gradient(135deg,#3b5998,#8b1f2e)}
+        .social-instagram{background:linear-gradient(135deg,#f58529,#dd2a7b)}
+        .social-discord{background:linear-gradient(135deg,#7289da,#4c6ef5)}
+        .social-github{background:linear-gradient(135deg,#222,#8b1f2e)}
+
+        @media (max-width:900px){
+            .social-grid{flex-direction:column}
+        }
+
+        /* Contact */
+        form{display:grid;gap:10px}
+        input,textarea{padding:12px;border-radius:10px;border:1px solid rgba(0,0,0,0.06);background:transparent;color:var(--text)}
+        textarea{min-height:110px;resize:vertical}
+        .muted{color:var(--muted)}
+
+        footer{padding:30px 0;font-size:14px}
+        .footer-inner{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px;background: color-mix(in srgb,var(--card) 96%, rgba(176,42,55,0.02));border-radius:10px}
+        .footer-inner a{color:var(--accent2);font-weight:700;text-decoration:none}
+        .footer-left, .footer-right{color:var(--muted)}
+        .footer-left a, .footer-right a{color:var(--text)}
+
+        /* Responsive */
+        @media (max-width:900px){
+            .hero{grid-template-columns:1fr;gap:20px}
+            .navlinks{display:none}
+        }
+        @media (max-width:600px){
+            .container{padding:0 14px}
+            .thumb{display:none}
+        }
+
+        /* Subtle floating animation applied to panels and cards */
+        @keyframes floaty{ 
+            0% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-6px) rotate(-1deg); }
+            100% { transform: translateY(0) rotate(0deg); }
+        }
+        .section-inner, .card, .project, .social-card{ 
+            will-change: transform; 
+            animation: floaty 6s ease-in-out infinite; 
+            /* delays will be set via JS for variety */
+        }
+
+        /* Flying link animation element (created dynamically) */
+        .fly-dot{
+            position:fixed; width:14px; height:14px; border-radius:50%; background:var(--accent); box-shadow:0 6px 18px rgba(139,31,46,0.28); z-index:9999; pointer-events:none; transform:translate(-50%,-50%);
+        }
+
+        html{scroll-behavior:smooth}
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <div class="brand">
+                    <div class="logo">PT</div>
+                    <div>
+                        <div style="font-weight:800">Paul / Aspiring Web Dev</div>
+                        <div style="font-size:12px;color:var(--muted)">IT Student • Problem Solver</div>
+                    </div>
+                </div>
+                <div class="navlinks" id="navlinks">
+                    <a href="#home" class="navlink active">Home</a>
+                    <a href="#about" class="navlink">About</a>
+                    <a href="#projects" class="navlink">Projects</a>
+                    <a href="#skills" class="navlink">Skills</a>
+                    <a href="#contact" class="navlink">Contact</a>
+                    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">🌓</button>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section id="home" class="hero">
+            <div class="section-inner">
+            <div class="intro">
+                <span class="eyebrow">A Student Athlete and a Aspiring Web Developer</span>
+                <h1>Hi, I'm Paul. I build thoughtful, responsive web experiences.</h1>
+                <p class="lead">IT Student | Aspiring Web Developer | Hands-on Problem Solver. I combine my passion for technology, coding, and hardware projects with discipline from sports and mechanical work. Explore my projects, skills, and feel free to connect to collaborate or learn together.</p>
+                <div class="cta">
+                    <a class="btn" href="#projects">See Projects</a>
+                    <a class="btn secondary" href="#contact">Get In Touch</a>
+                </div>
+                <p class="quote">"Code is like humor. When you have to explain it, it’s bad." — Paul</p>
+            </div>
+
+            <aside class="card">
+                <div class="avatar">
+                    <!-- Inline placeholder avatar SVG -->
+                    <img src="assets/profile.jpg" alt="Profile" loading="lazy" />
+                </div>
+                <div style="margin-top:12px;font-weight:700">Aspiring Web Developer</div>
+                <div class="muted">A Tech Enthusiast, Athlete, and Maker Who Builds, Codes, and Creates.</div>
+                </aside>
+            </div>
+            </div>
+        </section>
+
+        <section id="about">
+            <div class="section-inner">
+            <h2>About</h2>
+            <div class="grid-2">
+                <div>
+                    <p>Hi there! I'm Paul Joseph M. Teves, an IT student at the vibrant EVSU Ormoc campus, and I'm on a mission to infuse every line of code (and every day) with joy! Being an IT student isn't just about algorithms and debugging for me; it's about the thrill of creation, the satisfaction of solving puzzles, and the incredible community that surrounds me. My life at EVSU Ormoc is a delightful blend of academic challenges and the simple pleasures of campus life. Picture this: mornings filled with engaging lectures and hands-on lab sessions, afternoons spent collaborating with brilliant classmates on exciting projects, and evenings unwinding with friends, sharing laughter and stories.</p>
+                    <h4>Education</h4>
+                    <p class="muted">I started my education at Ormoc City SPED Center as part of the Fast Learner Class, where I developed a strong foundation in academics and discipline. I completed my high school education at New Ormoc City National High School under the Special Program in Sports, specializing in Arnis, which strengthened my focus, perseverance, and teamwork. For senior high school, I studied at Ormoc City Sports Academy, balancing academic growth with athletic training. I am currently pursuing a Bachelor of Science in Information Technology at Eastern Visayas State University (EVSU), where I continue to develop my skills in technology and problem-solving.</p>
+                    <h4>Interests</h4>
+                    <p class="muted">My interests focus on technology, mechanics, and active living. I am passionate about information technology, particularly web development, UI/UX design, networking, databases, and ethical hacking, and I stay updated by reading tech blogs and experimenting with hardware projects. I also enjoy mechanical work and metal fabrication, where creativity meets precision. Outside of technology, I am interested in sports and physical activities such as Arnis, running, cycling, and motorcycling, as well as chess and photography, which sharpen my strategic thinking and creativity.</p>
+                </div>
+                <div>
+                    <h4>Hobbies</h4>
+                    <p class="muted">I enjoy a wide range of activities that reflect my active, hands-on, and technical personality. In my free time, I like riding motorcycles, cycling, running, and driving cars, which help me stay physically active and focused. I also practice Arnis, where discipline and control are essential. Beyond sports, I have a strong interest in mechanical work, including being a hands-on mechanic and doing metal works such as welding and fabrication. I also enjoy coding, gaming, reading tech blogs, and tinkering with small hardware projects, which allow me to continuously learn and experiment with technology. In quieter moments, I play chess to sharpen my strategic thinking and explore photography as a creative outlet. When I’m not working or training, I enjoy spending time with my dogs, which helps me relax and recharge.</p>
+                    <h4>What I bring</h4>
+                    <ul>
+                        <li>Strong discipline and resilience developed through sports, especially Arnis</li>
+                        <li>Solid foundation in Information Technology with a problem-solving mindset</li>
+                        <li>SPractical skills in coding, hardware tinkering, and small tech projects</li>
+                        <li>Hands-on experience in mechanical work, welding, and metal fabrication</li>
+                        <li>Ability to approach challenges from both technical and practical perspectives</li>
+                        <li>Adaptability and curiosity toward new technologies and continuous learning</li>
+                        <li>Experience working independently and in team environments</li>
+                        <li>SCommitment to quality, growth, and improvement in everything I do</li>
+                    </ul>
+                </div>
+            </div>
+            </div>
+        </section>
+
+        <section id="projects">
+            <div class="section-inner">
+            <h2>Projects</h2>
+            <div style="display:grid;gap:14px">
+                <article class="project">
+                    <div class="thumb">
+                        <svg width="120" height="80" viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg"><rect width="120" height="80" rx="8" fill="#b02a37"/><text x="12" y="48" font-size="18" fill="#fff">Course Site</text></svg>
+                    </div>
+                    <div class="project-content">
+                        <h3>Course Tracker (1st year project)</h3>
+                        <p class="muted">A small responsive site to track courses and assignments. Built as a group project to practice HTML, CSS, and vanilla JavaScript.</p>
+                        <p><strong>Role:</strong> Front-end developer — built UI and interactivity.</p>
+                        <p><strong>Tools:</strong> HTML5, CSS3, JavaScript, Git.</p>
+                    </div>
+                </article>
+
+                <article class="project">
+                    <div class="thumb">
+                        <img src="assets/project2.png" alt="EVSU-OC ALIBLOG screenshot" loading="lazy" />
+                    </div>
+                    <div class="project-content">
+                        <h3>EVSU - OC ALIBLOG</h3>
+                        <h4>Automated library logbook System</h4>
+                        <p class="muted">A modular, object-oriented Python project that creates and manages QR codes for user registration, stores and retrieves records from a local database, and provides scanning and admin utilities to manage attendees and QR assets.</p>
+                        <p><strong>Role:</strong> Developer — designed and implemented an OOP Python application for QR-based registration and scanning</p>
+                        <p><strong>Tools:</strong> LANGUAGE: Python    DATABASE: SQLite / file-based DB    LIBRARIES: QR-generation and image handling, standard Python modules</p>
+                    </div>
+                </article>
+            </div>
+            </div>
+        </section>
+
+        <section id="skills">
+            <div class="section-inner">
+            <h2>Skills</h2>
+            <div class="grid-2">
+                <div>
+                    <h4>Languages & Frameworks</h4>
+                    <div class="skills">
+                        <div class="pill">HTML</div>
+                        <div class="pill">CSS</div>
+                        <div class="pill">JavaScript</div>
+                        <div class="pill">React (learning)</div>
+                    </div>
+                    <h4 style="margin-top:14px">Tools</h4>
+                    <div class="skills">
+                        <div class="pill">Git</div>
+                        <div class="pill">VS Code</div>
+                        <div class="pill">Linux</div>
+                        <div class="pill">Docker (basic)</div>
+                    </div>
+                </div>
+                <div>
+                    <h4>Other Areas</h4>
+                    <div class="skills">
+                        <div class="pill">Web Dev</div>
+                        <div class="pill">Databases</div>
+                        <div class="pill">Networking</div>
+                        <div class="pill">Cybersecurity</div>
+                    </div>
+                    <h4 style="margin-top:14px">Soft Skills</h4>
+                    <div class="skills">
+                        <div class="pill">Teamwork</div>
+                        <div class="pill">Problem Solving</div>
+                        <div class="pill">Communication</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact">
+            <div class="section-inner">
+            <h2>Contact</h2>
+            <div class="grid-2">
+                <div>
+                    <p class="muted">Interested in collaborating or hiring? Send a message — I usually respond within a few days.</p>
+                    <p><strong>Email:</strong> <a href="mailto:pauljosephm.teves@evsu.edu.ph">pauljosephm.teves@evsu.edu.ph</a></p>
+                    <p><strong>Find me:</strong> <a href="https://github.com/tevespaul17-beep" target="_blank" rel="noopener">GitHub</a> </p>
+                </div>
+                <div>
+                    <form id="contactForm">
+                        <input type="text" name="name" id="name" placeholder="Your name" required />
+                        <input type="email" name="email" id="email" placeholder="Your email" required />
+                        <textarea name="message" id="message" placeholder="Message" required></textarea>
+                        <div style="display:flex;gap:10px;align-items:center">
+                            <button class="btn" type="submit">Send Message</button>
+                            <div id="formStatus" class="muted">We'll not spam you.</div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            </div>
+        </section>
+
+        <section id="connect">
+            <div class="section-inner">
+            <h2>Connect</h2>
+            <p class="muted">Follow or message me on these platforms — click any card to open the link.</p>
+            <div class="social-grid">
+                <a class="social-card" href="https://www.facebook.com/share/19gi4wR6aZ/?mibextid=wwXIfr" target="_blank" rel="noopener" aria-label="Facebook">
+                    <div class="social-icon social-facebook" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M22.675 0H1.325C.593 0 0 .593 0 1.326V22.67c0 .732.593 1.33 1.325 1.33h11.495V14.7h-3.13v-3.622h3.13V8.413c0-3.1 1.894-4.788 4.66-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12V24h6.116c.73 0 1.324-.598 1.324-1.332V1.326C24 .593 23.405 0 22.675 0z"/></svg>
+                    </div>
+                    <div>
+                        <div class="social-label">Facebook</div>
+                        <div class="muted" style="font-size:13px">facebook.com/paul</div>
+                    </div>
+                </a>
+
+                <a class="social-card" href="https://discord.com/users/1416949177711071313" target="_blank" rel="noopener" aria-label="Discord">
+                    <div class="social-icon social-discord" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M20.317 4.369a19.791 19.791 0 0 0-4.885-1.515.07.07 0 0 0-.073.035c-.211.375-.444.864-.608 1.249-1.844-.276-3.68-.276-5.486 0-.164-.4-.405-.874-.617-1.25a.07.07 0 0 0-.073-.035A19.736 19.736 0 0 0 3.68 4.37a.064.064 0 0 0-.03.025C.533 9.045-.32 13.578.099 18.057a.082.082 0 0 0 .031.056c2.052 1.507 4.042 2.422 5.992 3.029a.077.077 0 0 0 .084-.027c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.105c-.652-.247-1.27-.549-1.872-.892a.077.077 0 0 1-.007-.127c.125-.094.25-.19.374-.287a.074.074 0 0 1 .08-.01c3.927 1.793 8.18 1.793 12.061 0a.073.073 0 0 1 .082.009c.124.097.25.193.375.287a.077.077 0 0 1-.006.127c-.603.343-1.22.645-1.873.892a.076.076 0 0 0-.04.106c.36.699.773 1.363 1.225 1.993a.076.076 0 0 0 .084.028c1.952-.608 3.942-1.523 5.994-3.03a.077.077 0 0 0 .03-.056c.5-5.177-.838-9.59-3.549-13.663a.061.061 0 0 0-.03-.025zM8.02 15.331c-1.182 0-2.156-1.085-2.156-2.418 0-1.333.955-2.418 2.156-2.418 1.21 0 2.189 1.096 2.156 2.418 0 1.333-.955 2.418-2.156 2.418zm7.974 0c-1.182 0-2.156-1.085-2.156-2.418 0-1.333.955-2.418 2.156-2.418 1.21 0 2.189 1.096 2.156 2.418 0 1.333-.946 2.418-2.156 2.418z"/></svg>
+                    </div>
+                    <div>
+                        <div class="social-label">Discord</div>
+                        <div class="muted" style="font-size:13px">ID: 1416949177711071313</div>
+                    </div>
+                </a>
+
+                <a class="social-card" href="https://www.instagram.com/polm_tevs?igsh=MWMzdmJzZ3NzZ2czYQ%3D%3D&utm_source=qr&fbclid=IwZXh0bgNhZW0CMTAAYnJpZBExYU1iN3NsS01BQXpQdXVWenNydGMGYXBwX2lkEDIyMjAzOTE3ODgyMDA4OTIAAR72fufYzLg4hN_T5zjWHGFqfMVlr_cqFpbc6ReOmjwxlFMhvwiu7Rxgv5HflQ_aem_O0Fr9HpZf6z1q0gAlg8jNg" target="_blank" rel="noopener" aria-label="Instagram">
+                    <div class="social-icon social-instagram" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 2.163c3.204 0 3.584.012 4.85.07 1.366.062 2.633.34 3.608 1.316.975.975 1.254 2.243 1.315 3.608.058 1.266.07 1.645.07 4.85s-.012 3.584-.07 4.85c-.062 1.366-.34 2.633-1.315 3.608-.975.975-2.242 1.254-3.608 1.315-1.266.058-1.645.07-4.85.07s-3.584-.012-4.85-.07c-1.366-.062-2.633-.34-3.608-1.315-.975-.975-1.254-2.242-1.315-3.608C2.175 15.584 2.163 15.204 2.163 12s.012-3.584.07-4.85c.062-1.366.34-2.633 1.315-3.608C4.523 2.175 5.79 1.897 7.156 1.835 8.422 1.777 8.802 1.765 12 1.765M12 0C8.741 0 8.333.013 7.053.072 5.775.13 4.672.443 3.678 1.438 2.684 2.432 2.371 3.535 2.313 4.813 2.254 6.093 2.241 6.501 2.241 9.76s.013 3.667.072 4.947c.058 1.279.371 2.382 1.366 3.376.994.994 2.097 1.308 3.376 1.366 1.28.059 1.688.072 4.947.072s3.667-.013 4.947-.072c1.279-.058 2.382-.371 3.376-1.366.994-.994 1.308-2.097 1.366-3.376.059-1.28.072-1.688.072-4.947s-.013-3.667-.072-4.947c-.058-1.279-.371-2.382-1.366-3.376C19.382.443 18.279.13 17 .072 15.72.013 15.312 0 12 0zm0 5.838A6.162 6.162 0 1 0 18.162 12 6.162 6.162 0 0 0 12 5.838zm0 10.164A3.999 3.999 0 1 1 16 12a3.999 3.999 0 0 1-4 4zm6.406-11.845a1.44 1.44 0 1 1-1.44-1.44 1.44 1.44 0 0 1 1.44 1.44z"/></svg>
+                    </div>
+                    <div>
+                        <div class="social-label">Instagram</div>
+                        <div class="muted" style="font-size:13px">@polm_tevs</div>
+                    </div>
+                </a>
+
+                <a class="social-card" href="https://github.com/tevespaul17-beep" target="_blank" rel="noopener" aria-label="GitHub">
+                    <div class="social-icon social-github" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12a9.99 9.99 0 006.84 9.49c.5.09.68-.22.68-.49v-1.7c-2.78.6-3.37-1.17-3.37-1.17-.46-1.17-1.12-1.48-1.12-1.48-.92-.63.07-.62.07-.62 1.02.07 1.56 1.05 1.56 1.05.9 1.55 2.36 1.1 2.94.84.09-.66.35-1.1.64-1.36-2.22-.26-4.56-1.11-4.56-4.95 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.6 9.6 0 0112 6.8c.85 0 1.71.12 2.5.35 1.9-1.29 2.74-1.02 2.74-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.85-2.34 4.69-4.57 4.95.36.31.68.92.68 1.86v2.76c0 .27.18.59.69.49A10 10 0 0022 12c0-5.52-4.48-10-10-10z"/></svg>
+                    </div>
+                    <div>
+                        <div class="social-label">GitHub</div>
+                        <div class="muted" style="font-size:13px">tevespaul17-beep</div>
+                    </div>
+                </a>
+            </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="container">
+        <div class="footer-inner">
+            <div class="footer-left">© Paul • Aspiring Web Developer — <a href="mailto:pauljosephm.teves@evsu.edu.ph">pauljosephm.teves@evsu.edu.ph</a></div>
+            <div class="footer-right">GitHub: <a href="https://github.com/tevespaul17-beep" target="_blank" rel="noopener">tevespaul17-beep</a> • Built with HTML, CSS & JavaScript</div>
+        </div>
+    </footer>
+
+    <script>
+        // Theme toggle with localStorage
+        (function(){
+            const root = document.documentElement;
+            const key = 'theme-preference';
+            const setTheme = t=>{ if(t==='dark') document.documentElement.setAttribute('data-theme','dark'); else document.documentElement.removeAttribute('data-theme'); };
+            const saved = localStorage.getItem(key) || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            setTheme(saved);
+            const btn = document.getElementById('themeToggle');
+            btn.addEventListener('click',()=>{
+                const now = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+                setTheme(now); localStorage.setItem(key, now);
+            });
+        })();
+
+        // Smooth scrolling active nav highlight
+        (function(){
+            const links = document.querySelectorAll('.navlink');
+            const sections = Array.from(links).map(l => document.querySelector(l.getAttribute('href')));
+            function onScroll(){
+                const y = window.scrollY + 140;
+                sections.forEach((sec,i)=>{
+                    if(!sec) return;
+                    const top = sec.offsetTop;
+                    const bottom = top + sec.offsetHeight;
+                    links[i].classList.toggle('active', y >= top && y < bottom);
+                });
+            }
+            window.addEventListener('scroll', onScroll, {passive:true});
+            onScroll();
+            // Close mobile nav when link clicked
+            document.querySelectorAll('.navlink').forEach(a=>a.addEventListener('click', ()=>{ if(window.innerWidth<900){ /* reserved for mobile menu logic */ } }));
+        })();
+
+        // Contact form handler (no backend) - shows a friendly message
+        (function(){
+            const form = document.getElementById('contactForm');
+            const status = document.getElementById('formStatus');
+            form.addEventListener('submit', e=>{
+                e.preventDefault();
+                const name = form.name.value.trim();
+                const email = form.email.value.trim();
+                const msg = form.message.value.trim();
+                if(!name || !email || !msg){ status.textContent = 'Please fill all fields.'; return; }
+                status.textContent = 'Sending…';
+                // Simulate send
+                setTimeout(()=>{
+                    status.textContent = 'Thanks — message queued. (No backend in this demo)';
+                    form.reset();
+                },800);
+            });
+        })();
+
+        // Add variety to floaty animations by assigning random delays
+        (function(){
+            const floatTargets = document.querySelectorAll('.section-inner, .card, .project, .social-card');
+            floatTargets.forEach((el,i)=>{
+                const delay = (Math.random() * 2) - 1; // -1s .. +1s
+                const dur = 5 + Math.random() * 3; // 5s .. 8s
+                el.style.animationDelay = `${delay}s`;
+                el.style.animationDuration = `${dur}s`;
+            });
+        })();
+
+        // Fly-to-target animation for internal anchor clicks (nav, CTA links)
+        (function(){
+            function createDot(x,y){
+                const d = document.createElement('div');
+                d.className = 'fly-dot';
+                d.style.left = `${x}px`;
+                d.style.top = `${y}px`;
+                document.body.appendChild(d);
+                return d;
+            }
+
+            function animateFly(startX,startY,endX,endY,opts={}){
+                return new Promise(resolve=>{
+                    const dot = createDot(startX,startY);
+                    const anim = dot.animate([
+                        { transform:`translate(-50%,-50%) translate(0px,0px) scale(1)` , opacity:1 },
+                        { transform:`translate(-50%,-50%) translate(${endX-startX}px,${endY-startY}px) scale(.6)`, opacity:0.9 }
+                    ], {
+                        duration: opts.duration || 650,
+                        easing: opts.easing || 'cubic-bezier(.2,.9,.3,1)'
+                    });
+                    anim.onfinish = ()=>{ dot.remove(); resolve(); };
+                });
+            }
+
+            // Handle clicks on internal anchors with href starting with '#'
+            document.addEventListener('click', async function(e){
+                const a = e.target.closest('a[href^="#"]');
+                if(!a) return;
+                const href = a.getAttribute('href');
+                if(href === '#' || href === '') return;
+                const target = document.querySelector(href);
+                if(!target) return;
+
+                // Prevent default to play animation first
+                e.preventDefault();
+
+                const rect = a.getBoundingClientRect();
+                const startX = rect.left + rect.width/2;
+                const startY = rect.top + rect.height/2;
+
+                const tRect = target.getBoundingClientRect();
+                // Aim for the top-center of target (relative to viewport) then offset slightly
+                const endX = tRect.left + tRect.width/2;
+                const endY = tRect.top + 20; // a bit below top edge
+
+                // Start a smooth scroll to the target while the dot flies
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                // Convert viewport coordinates to fixed/document coordinates for the dot
+                const docStartX = startX;
+                const docStartY = startY;
+                const docEndX = endX;
+                const docEndY = endY;
+
+                await animateFly(docStartX, docStartY, docEndX, docEndY, { duration: 700 });
+
+                // After animation, update the hash without jumping
+                history.replaceState(null, '', href);
+            }, { passive: false });
+        })();
+    </script>
+</body>
+</html>
+
