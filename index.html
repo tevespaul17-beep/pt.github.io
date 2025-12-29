@@ -524,6 +524,7 @@
                     try{ audio.pause(); audio.src = ''; }catch(e){}
                 }
                 status.textContent = `Loading ${src}...`;
+                console.info('Audio widget trying', src);
                 audio = new Audio(src);
                 audio.loop = true;
                 audio.preload = 'auto';
@@ -534,8 +535,8 @@
                 const cleanup = ()=>{ audio.removeEventListener('canplay', onCan); audio.removeEventListener('error', onErr); };
                 audio.addEventListener('canplay', onCan);
                 audio.addEventListener('error', onErr);
-                // also set a timeout: if not ready after 2s, try next (or fallback)
-                setTimeout(()=>{ if(!loaded){ tryLoadNext(); } }, 2000);
+                // also set a timeout: if not ready after 3s, try next (or fallback)
+                setTimeout(()=>{ if(!loaded){ console.warn('Audio not ready, trying next candidate'); tryLoadNext(); } }, 3000);
             }
             tryLoadNext();
 
@@ -562,6 +563,22 @@
                     status.textContent = 'Playback blocked — tap to allow';
                 }
             });
+
+            // --- DEBUG helper: visible test player to verify browser can play the file ---
+            const debugWrap = document.createElement('div');
+            debugWrap.style.position = 'fixed';
+            debugWrap.style.left = '12px';
+            debugWrap.style.bottom = '12px';
+            debugWrap.style.zIndex = 9998;
+            debugWrap.style.background = 'rgba(255,255,255,0.95)';
+            debugWrap.style.padding = '6px';
+            debugWrap.style.borderRadius = '8px';
+            debugWrap.style.boxShadow = '0 6px 18px rgba(2,6,23,0.08)';
+            debugWrap.innerHTML = `<div style="font-size:13px;margin-bottom:6px;color:var(--muted)">Debug: test player</div><video id="debugPlayer" controls style="max-width:260px;display:block"><source src="assets/music.mp4"></video>`;
+            document.body.appendChild(debugWrap);
+            const dbg = document.getElementById('debugPlayer');
+            dbg.addEventListener('canplay', ()=>{ console.info('Debug player canplay'); });
+            dbg.addEventListener('error', ()=>{ console.error('Debug player error — browser cannot play assets/music.mp4'); });
 
             volInput.addEventListener('input', ()=>{ audio.volume = parseFloat(volInput.value); });
 
