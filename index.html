@@ -500,22 +500,42 @@
             let audioReady = false;
             let candidateIndex = 0;
 
+            function createVideoFallback(src){
+                status.textContent = 'Trying video fallback...';
+                const v = document.createElement('video');
+                v.src = src;
+                v.loop = true;
+                v.preload = 'auto';
+                v.volume = parseFloat(volInput.value);
+                v.style.display = 'none';
+                document.body.appendChild(v);
+                v.addEventListener('canplay', ()=>{ audio = v; audioReady = true; status.textContent = `Ready (video) — ${src}`; });
+                v.addEventListener('error', ()=>{ status.textContent = 'No playable media found in assets/'; });
+            }
+
             function tryLoadNext(){
                 if(candidateIndex >= candidates.length){
-                    audioReady = false;
-                    status.textContent = 'No music file found (place assets/music.mp4 or music.mp3)';
+                    // try video fallback specifically for music.mp4
+                    createVideoFallback('assets/music.mp4');
                     return;
                 }
                 const src = candidates[candidateIndex++];
                 if(audio){
                     try{ audio.pause(); audio.src = ''; }catch(e){}
                 }
+                status.textContent = `Loading ${src}...`;
                 audio = new Audio(src);
                 audio.loop = true;
                 audio.preload = 'auto';
                 audio.volume = parseFloat(volInput.value);
-                audio.addEventListener('canplay', ()=>{ audioReady = true; status.textContent = `Ready — ${src}`; });
-                audio.addEventListener('error', ()=>{ tryLoadNext(); });
+                let loaded = false;
+                const onCan = ()=>{ loaded = true; audioReady = true; status.textContent = `Ready — ${src}`; cleanup(); };
+                const onErr = ()=>{ cleanup(); tryLoadNext(); };
+                const cleanup = ()=>{ audio.removeEventListener('canplay', onCan); audio.removeEventListener('error', onErr); };
+                audio.addEventListener('canplay', onCan);
+                audio.addEventListener('error', onErr);
+                // also set a timeout: if not ready after 2s, try next (or fallback)
+                setTimeout(()=>{ if(!loaded){ tryLoadNext(); } }, 2000);
             }
             tryLoadNext();
 
@@ -533,8 +553,14 @@
 
             playBtn.addEventListener('click', async (e)=>{
                 e.stopPropagation();
-                if(!audioReady){ status.textContent = 'Music file missing or not loaded'; return; }
-                if(!playing) await playAudio(); else pauseAudio();
+                if(!audio){ status.textContent = 'No media available yet'; return; }
+                // attempt playback even if canplay hasn't fired; browsers require user gesture which this is
+                try{
+                    await audio.play();
+                    playing = true; playBtn.textContent = 'Pause'; playBtn.setAttribute('aria-pressed','true'); status.textContent = 'Playing';
+                }catch(err){
+                    status.textContent = 'Playback blocked — tap to allow';
+                }
             });
 
             volInput.addEventListener('input', ()=>{ audio.volume = parseFloat(volInput.value); });
