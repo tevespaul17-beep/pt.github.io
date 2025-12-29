@@ -49,6 +49,7 @@
         .logo{width:42px;height:42px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center;color:var(--card);font-weight:700}
         .navlinks{display:flex;gap:14px;align-items:center}
         .menu-toggle{display:none;background:transparent;border:0;padding:8px;border-radius:8px;color:var(--muted);cursor:pointer;font-size:20px}
+        .music-toggle{display:none;background:transparent;border:0;padding:8px;border-radius:8px;color:var(--muted);cursor:pointer;font-size:18px}
         .navlinks a{color:var(--muted);text-decoration:none;padding:8px;border-radius:8px;font-weight:600}
         .navlinks a.active{color:var(--accent);background:linear-gradient(90deg,transparent,rgba(0,0,0,0.03));}
         .theme-toggle{background:transparent;border:0;padding:8px;border-radius:8px;color:var(--muted);cursor:pointer}
@@ -143,6 +144,7 @@
         @media (max-width:900px){
             .hero{grid-template-columns:1fr;gap:20px}
             .menu-toggle{display:inline-flex}
+            .music-toggle{display:inline-flex;margin-left:8px}
             .navlinks{display:none}
             .navlinks.open{display:flex;flex-direction:column;position:fixed;top:66px;right:14px;padding:12px;gap:10px;background:var(--card);border-radius:12px;box-shadow:0 12px 30px rgba(2,6,23,0.12);border:1px solid rgba(0,0,0,0.06);z-index:60}
             .navlinks.open a{padding:10px 14px}
@@ -205,6 +207,7 @@
                     </div>
                 </div>
                 <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu" aria-expanded="false">☰</button>
+                <button class="music-toggle" id="musicToggle" aria-pressed="false" aria-label="Play background music">♪</button>
                 <div class="navlinks" id="navlinks">
                     <a href="#home" class="navlink active">Home</a>
                     <a href="#about" class="navlink">About</a>
@@ -436,6 +439,85 @@
                 const now = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
                 setTheme(now); localStorage.setItem(key, now);
             });
+        })();
+
+        // Ambient background music using WebAudio (no external file)
+        (function(){
+            const btn = document.getElementById('musicToggle');
+            if(!btn) return;
+            let ctx = null;
+            let master = null;
+            let oscillators = [];
+            let lfo = null;
+            let playing = false;
+
+            function createEngine(){
+                ctx = new (window.AudioContext || window.webkitAudioContext)();
+                master = ctx.createGain();
+                master.gain.value = 0.02; // low volume
+                master.connect(ctx.destination);
+
+                // gentle filter to remove harsh highs
+                const filter = ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.value = 1200;
+                filter.connect(master);
+
+                // two detuned oscillators for a pad
+                const o1 = ctx.createOscillator(); o1.type = 'sine'; o1.frequency.value = 220; o1.detune.value = -10;
+                const g1 = ctx.createGain(); g1.gain.value = 0.6; o1.connect(g1); g1.connect(filter);
+
+                const o2 = ctx.createOscillator(); o2.type = 'sawtooth'; o2.frequency.value = 110; o2.detune.value = 6;
+                const g2 = ctx.createGain(); g2.gain.value = 0.35; o2.connect(g2); g2.connect(filter);
+
+                oscillators = [o1,o2];
+
+                // subtle LFO on gain for movement
+                lfo = ctx.createOscillator();
+                lfo.type = 'sine';
+                lfo.frequency.value = 0.12; // very slow
+                const lfoGain = ctx.createGain(); lfoGain.gain.value = 0.12;
+                lfo.connect(lfoGain);
+                lfoGain.connect(g1.gain);
+                lfoGain.connect(g2.gain);
+            }
+
+            function startMusic(){
+                if(!ctx) createEngine();
+                if(ctx.state === 'suspended') ctx.resume();
+                const now = ctx.currentTime;
+                oscillators.forEach(o=>{ if(typeof o.start === 'function') try{o.start(now);}catch(e){} });
+                if(lfo && typeof lfo.start === 'function') try{ lfo.start(now); }catch(e){}
+                playing = true; btn.setAttribute('aria-pressed','true'); btn.textContent = '♫';
+            }
+
+            function stopMusic(){
+                if(!ctx) return;
+                // stop oscillators and dispose
+                const now = ctx.currentTime;
+                oscillators.forEach(o=>{ if(o && typeof o.stop === 'function'){ try{o.stop(now+0.02);}catch(e){} } });
+                if(lfo && typeof lfo.stop === 'function'){ try{ lfo.stop(now+0.02); }catch(e){} }
+                oscillators = [];
+                lfo = null;
+                // create a new context state later when starting again
+                try{ ctx.close(); }catch(e){}
+                ctx = null;
+                playing = false; btn.setAttribute('aria-pressed','false'); btn.textContent = '♪';
+            }
+
+            btn.addEventListener('click', async (e)=>{
+                e.stopPropagation();
+                if(!playing){
+                    try{ await (ctx ? (ctx.state === 'suspended' ? ctx.resume() : Promise.resolve()) : Promise.resolve()); }catch(e){}
+                    startMusic();
+                } else {
+                    stopMusic();
+                }
+            });
+
+            // remember user preference
+            const prefKey = 'bg-music-enabled';
+            try{ if(localStorage.getItem(prefKey) === 'true'){ /* don't auto-start — require user gesture */ } }catch(e){}
         })();
 
         // Smooth scrolling active nav highlight
