@@ -14,6 +14,7 @@
             --bg:#1a0b0d; --card:#0f0a0b; --text:#f6efe9; --muted:#cdb7b7; --accent:#b02a37; --accent2:#f5a623; --glass: rgba(255,255,255,0.03);
         }
         *{box-sizing:border-box}
+        img{max-width:100%;height:auto;display:block}
         html,body{height:100%;margin:0;font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;color:var(--text);-webkit-font-smoothing:antialiased;overflow-x:hidden}
         /* Layered, animated background with soft colorful blobs */
         html,body{
@@ -146,6 +147,23 @@
             .navlinks.open{display:flex;flex-direction:column;position:fixed;top:66px;right:14px;padding:12px;gap:10px;background:var(--card);border-radius:12px;box-shadow:0 12px 30px rgba(2,6,23,0.12);border:1px solid rgba(0,0,0,0.06);z-index:60}
             .navlinks.open a{padding:10px 14px}
             .social-grid{flex-direction:column}
+        }
+        /* Further mobile / tablet refinements */
+        @media (max-width:900px){
+            .logo{width:36px;height:36px}
+            .hero{padding:36px 0}
+            .avatar img{width:140px;border-width:4px}
+            .card{padding:14px}
+            .section-inner{padding:20px}
+            h1{font-size:clamp(22px,6vw,34px)}
+        }
+        @media (max-width:600px){
+            .navlinks.open{left:12px;right:12px;top:58px}
+            .avatar img{width:120px}
+            .hero{padding:26px 0}
+            .section-inner{padding:16px}
+            .logo{width:32px;height:32px}
+            .brand div{font-size:14px}
         }
         @media (max-width:600px){
             .container{padding:0 14px}
@@ -445,6 +463,14 @@
 
             // Close mobile menu when clicking outside
             document.addEventListener('click', (e)=>{ if(window.innerWidth<900 && !e.target.closest('#navlinks') && !e.target.closest('#menuToggle')){ navEl.classList.remove('open'); document.getElementById('menuToggle').setAttribute('aria-expanded','false'); } });
+
+            // Close mobile menu when resizing to desktop width
+            window.addEventListener('resize', ()=>{
+                if(window.innerWidth >= 900){
+                    navEl.classList.remove('open');
+                    menuBtn.setAttribute('aria-expanded','false');
+                }
+            });
         })();
 
         // Contact form handler (no backend) - shows a friendly message
