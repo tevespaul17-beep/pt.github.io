@@ -53,6 +53,8 @@
         .navlinks a{color:var(--muted);text-decoration:none;padding:8px;border-radius:8px;font-weight:600}
         .navlinks a.active{color:var(--accent);background:linear-gradient(90deg,transparent,rgba(0,0,0,0.03));}
         .theme-toggle{background:transparent;border:0;padding:8px;border-radius:8px;color:var(--muted);cursor:pointer}
+        /* mobile-specific theme toggle: hidden by default, shown in mobile media query */
+        .theme-toggle.mobile{display:none}
 
         /* Hero */
         .hero{display:grid;grid-template-columns:1fr 420px;gap:36px;align-items:start;padding:56px 0}
@@ -143,8 +145,9 @@
         /* Responsive */
         @media (max-width:900px){
             .hero{grid-template-columns:1fr;gap:20px}
-            .menu-toggle{display:inline-flex}
-            .music-toggle{display:inline-flex;margin-left:8px}
+            .menu-toggle{display:inline-flex;margin-left:auto}
+            .music-toggle{display:none}
+            .theme-toggle.mobile{display:inline-flex;margin-left:8px}
             .navlinks{display:none}
             .navlinks.open{display:flex;flex-direction:column;position:fixed;top:66px;right:14px;padding:12px;gap:10px;background:var(--card);border-radius:12px;box-shadow:0 12px 30px rgba(2,6,23,0.12);border:1px solid rgba(0,0,0,0.06);z-index:60}
             .navlinks.open a{padding:10px 14px}
@@ -208,6 +211,7 @@
                 </div>
                 <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu" aria-expanded="false">☰</button>
                 <button class="music-toggle" id="musicToggle" aria-pressed="false" aria-label="Play background music">♪</button>
+                <button class="theme-toggle mobile" id="themeToggleMobile" aria-label="Toggle theme">🌓</button>
                 <div class="navlinks" id="navlinks">
                     <a href="#home" class="navlink active">Home</a>
                     <a href="#about" class="navlink">About</a>
@@ -439,6 +443,14 @@
                 const now = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
                 setTheme(now); localStorage.setItem(key, now);
             });
+            // mobile theme toggle (visible when nav is collapsed)
+            const btnMobile = document.getElementById('themeToggleMobile');
+            if(btnMobile){
+                btnMobile.addEventListener('click',()=>{
+                    const now = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+                    setTheme(now); localStorage.setItem(key, now);
+                });
+            }
         })();
 
         
@@ -661,22 +673,31 @@
             });
         })();
 
-        // Contact form handler (no backend) - shows a friendly message
+        // Contact form handler — open user's mail client via mailto: to send message to site owner
         (function(){
             const form = document.getElementById('contactForm');
             const status = document.getElementById('formStatus');
+            const recipient = 'pauljosephm.teves@evsu.edu.ph';
             form.addEventListener('submit', e=>{
                 e.preventDefault();
                 const name = form.name.value.trim();
                 const email = form.email.value.trim();
                 const msg = form.message.value.trim();
                 if(!name || !email || !msg){ status.textContent = 'Please fill all fields.'; return; }
-                status.textContent = 'Sending…';
-                // Simulate send
-                setTimeout(()=>{
-                    status.textContent = 'Thanks — message queued. (No backend in this demo)';
-                    form.reset();
-                },800);
+                status.textContent = 'Opening your mail client…';
+                const subject = encodeURIComponent(`Website message from ${name}`);
+                const body = encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\n${msg}`);
+                const mailto = `mailto:${recipient}?subject=${subject}&body=${body}`;
+                // Try to open the user's mail client. If blocked, instruct user.
+                try{
+                    window.location.href = mailto;
+                    setTimeout(()=>{
+                        status.textContent = 'Mail client opened. If it did not, please email ' + recipient + '.';
+                        form.reset();
+                    },800);
+                }catch(err){
+                    status.textContent = 'Could not open mail client. Please email ' + recipient + ' directly.';
+                }
             });
         })();
 
