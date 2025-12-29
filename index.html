@@ -494,29 +494,35 @@
                 }
             }catch(e){}
 
-            // audio element — try multiple possible filenames (mp3, m4a, mp4)
-            const candidates = ['assets/music.mp3','assets/music.m4a','assets/music.mp4','assets/music.MP4','assets/music.m4p'];
+            // audio element — try the exact mp3 you added and common fallbacks
+            const candidates = [
+                "assets/Love's Train.mp3",
+                'assets/Love%27s%20Train.mp3',
+                'assets/music.mp3',
+                'assets/music.m4a',
+                'assets/music.mp4'
+            ];
             let audio = null;
             let audioReady = false;
             let candidateIndex = 0;
 
-            function createVideoFallback(src){
-                status.textContent = 'Trying video fallback...';
-                const v = document.createElement('video');
-                v.src = src;
-                v.loop = true;
-                v.preload = 'auto';
-                v.volume = parseFloat(volInput.value);
-                v.style.display = 'none';
-                document.body.appendChild(v);
-                v.addEventListener('canplay', ()=>{ audio = v; audioReady = true; status.textContent = `Ready (video) — ${src}`; });
-                v.addEventListener('error', ()=>{ status.textContent = 'No playable media found in assets/'; });
+            function createAudioFallback(src){
+                status.textContent = 'Trying audio fallback...';
+                const a = document.createElement('audio');
+                a.src = src;
+                a.loop = true;
+                a.preload = 'auto';
+                a.volume = parseFloat(volInput.value);
+                a.style.display = 'none';
+                document.body.appendChild(a);
+                a.addEventListener('canplay', ()=>{ audio = a; audioReady = true; status.textContent = `Ready (audio) — ${src}`; });
+                a.addEventListener('error', ()=>{ status.textContent = 'No playable media found in assets/'; });
             }
 
             function tryLoadNext(){
                 if(candidateIndex >= candidates.length){
-                    // try video fallback specifically for music.mp4
-                    createVideoFallback('assets/music.mp4');
+                    // final fallback: try the exact mp3 with audio element
+                    createAudioFallback("assets/Love's Train.mp3");
                     return;
                 }
                 const src = candidates[candidateIndex++];
@@ -564,7 +570,7 @@
                 }
             });
 
-            // --- DEBUG helper: visible test player to verify browser can play the file ---
+            // --- DEBUG helper: visible test audio player to verify browser can play the file ---
             const debugWrap = document.createElement('div');
             debugWrap.style.position = 'fixed';
             debugWrap.style.left = '12px';
@@ -574,11 +580,17 @@
             debugWrap.style.padding = '6px';
             debugWrap.style.borderRadius = '8px';
             debugWrap.style.boxShadow = '0 6px 18px rgba(2,6,23,0.08)';
-            debugWrap.innerHTML = `<div style="font-size:13px;margin-bottom:6px;color:var(--muted)">Debug: test player</div><video id="debugPlayer" controls style="max-width:260px;display:block"><source src="assets/music.mp4"></video>`;
+            debugWrap.innerHTML = `
+                <div style="font-size:13px;margin-bottom:6px;color:var(--muted)">Debug: test player</div>
+                <audio id="debugPlayer" controls style="max-width:260px;display:block">
+                    <source src="assets/Love's Train.mp3" type="audio/mpeg">
+                    <source src="assets/Love%27s%20Train.mp3" type="audio/mpeg">
+                    Your browser does not support the audio element.
+                </audio>`;
             document.body.appendChild(debugWrap);
             const dbg = document.getElementById('debugPlayer');
-            dbg.addEventListener('canplay', ()=>{ console.info('Debug player canplay'); });
-            dbg.addEventListener('error', ()=>{ console.error('Debug player error — browser cannot play assets/music.mp4'); });
+            dbg.addEventListener('canplay', ()=>{ console.info('Debug player canplay'); status.textContent = 'Debug player can play the mp3'; });
+            dbg.addEventListener('error', ()=>{ console.error('Debug player error — browser cannot play assets/Love\'s Train.mp3'); status.textContent = 'Debug player error — cannot play assets/Love\'s Train.mp3'; });
 
             volInput.addEventListener('input', ()=>{ audio.volume = parseFloat(volInput.value); });
 
