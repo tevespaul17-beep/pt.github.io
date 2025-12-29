@@ -485,8 +485,8 @@
             // themed styles for the widget
             const style = document.createElement('style');
             style.textContent = `
-                #${widgetId}{position:fixed;right:18px;bottom:18px;z-index:9999;display:flex;flex-direction:column;align-items:flex-end}
-                #${widgetId} .mw-handle{width:48px;height:48px;border-radius:999px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--card);border:0;display:grid;place-items:center;box-shadow:0 10px 30px rgba(2,6,23,0.12);cursor:grab}
+                #${widgetId}{position:fixed;right:18px;bottom:18px;z-index:9999;display:flex;flex-direction:column;align-items:flex-end;touch-action:none}
+                #${widgetId} .mw-handle{width:48px;height:48px;border-radius:999px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--card);border:0;display:grid;place-items:center;box-shadow:0 10px 30px rgba(2,6,23,0.12);cursor:grab;touch-action:none;-ms-touch-action:none}
                 #${widgetId} .mw-handle svg{display:block}
                 #${widgetId} .mw-controls{background:var(--card);border-radius:12px;padding:10px;margin-top:10px;box-shadow:0 12px 30px rgba(2,6,23,0.10);border:1px solid rgba(0,0,0,0.06);min-width:200px;color:var(--text)}
                 #${widgetId} .mw-controls{display:none}
@@ -615,24 +615,29 @@
             // Dragging support
             let dragging = false; let startX=0, startY=0, origLeft=0, origTop=0;
             handle.addEventListener('pointerdown', (e)=>{
+                e.preventDefault();
                 dragging = true; handle.setPointerCapture(e.pointerId); handle.style.cursor = 'grabbing';
                 startX = e.clientX; startY = e.clientY;
                 const rect = widget.getBoundingClientRect();
                 origLeft = rect.left; origTop = rect.top;
             });
-            document.addEventListener('pointermove', (e)=>{
+            // Use non-passive listener so we can prevent default touch scrolling during drag
+            const onPointerMove = (e)=>{
                 if(!dragging) return;
+                e.preventDefault();
                 const dx = e.clientX - startX; const dy = e.clientY - startY;
                 const nx = Math.max(8, Math.min(window.innerWidth - 60, origLeft + dx));
                 const ny = Math.max(8, Math.min(window.innerHeight - 60, origTop + dy));
                 widget.style.left = nx + 'px'; widget.style.top = ny + 'px'; widget.style.right = 'auto'; widget.style.bottom = 'auto';
-            });
-            document.addEventListener('pointerup', (e)=>{
+            };
+            document.addEventListener('pointermove', onPointerMove, { passive: false });
+            const onPointerUp = (e)=>{
                 if(!dragging) return; dragging = false; handle.style.cursor = 'grab';
                 // persist
                 const rect = widget.getBoundingClientRect();
                 try{ localStorage.setItem(storageKey, JSON.stringify({ x: rect.left, y: rect.top })); }catch(e){}
-            });
+            };
+            document.addEventListener('pointerup', onPointerUp, { passive: false });
 
             // close controls when clicking outside
             document.addEventListener('click', ()=>{ if(widget.classList.contains('open')) widget.classList.remove('open'); });
