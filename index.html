@@ -571,15 +571,30 @@
                 }
             }catch(e){}
 
-            // audio element
-            let audio = new Audio('assets/music.mp3');
-            audio.loop = true;
-            audio.preload = 'auto';
-            audio.volume = parseFloat(volInput.value);
+            // audio element — try multiple possible filenames (mp3, m4a, mp4)
+            const candidates = ['assets/music.mp3','assets/music.m4a','assets/music.mp4','assets/music.MP4','assets/music.m4p'];
+            let audio = null;
             let audioReady = false;
+            let candidateIndex = 0;
 
-            audio.addEventListener('canplay', ()=>{ audioReady = true; status.textContent = 'Ready'; });
-            audio.addEventListener('error', ()=>{ audioReady = false; status.textContent = 'No music file found (place assets/music.mp3)'; });
+            function tryLoadNext(){
+                if(candidateIndex >= candidates.length){
+                    audioReady = false;
+                    status.textContent = 'No music file found (place assets/music.mp4 or music.mp3)';
+                    return;
+                }
+                const src = candidates[candidateIndex++];
+                if(audio){
+                    try{ audio.pause(); audio.src = ''; }catch(e){}
+                }
+                audio = new Audio(src);
+                audio.loop = true;
+                audio.preload = 'auto';
+                audio.volume = parseFloat(volInput.value);
+                audio.addEventListener('canplay', ()=>{ audioReady = true; status.textContent = `Ready — ${src}`; });
+                audio.addEventListener('error', ()=>{ tryLoadNext(); });
+            }
+            tryLoadNext();
 
             // play/pause
             let playing = false;
