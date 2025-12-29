@@ -173,15 +173,15 @@
             .cta a{flex:1}
         }
 
-        /* Subtle floating animation applied to panels and cards */
-        @keyframes floaty{ 
-            0% { transform: translateY(0) rotate(0deg); }
-            50% { transform: translateY(-6px) rotate(-1deg); }
-            100% { transform: translateY(0) rotate(0deg); }
+        /* Hovering up-and-down animation for panels and cards */
+        @keyframes hover-updown{
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0); }
         }
-        .section-inner, .card, .project, .social-card{ 
-            will-change: transform; 
-            animation: floaty 6s ease-in-out infinite; 
+        .section-inner, .card, .project, .social-card{
+            will-change: transform;
+            animation: hover-updown 4s ease-in-out infinite;
             /* delays will be set via JS for variety */
         }
 
