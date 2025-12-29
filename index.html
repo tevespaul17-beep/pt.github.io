@@ -495,6 +495,16 @@
                 #${widgetId} .mw-play{background:linear-gradient(90deg,rgba(139,31,46,0.06),transparent);border:0;padding:8px;border-radius:8px;cursor:pointer;color:var(--accent);display:grid;place-items:center}
                 #${widgetId} .mw-play svg{display:block}
                 #${widgetId} .mw-vol{width:110px}
+                /* tucked state: partially hide widget at left or right edge */
+                #${widgetId}.hidden-edge{transition:left .18s ease,right .18s ease}
+                /* visible tab when tucked on right */
+                #${widgetId}.tucked-right{right:-24px;left:auto}
+                #${widgetId}.tucked-right .mw-handle{border-left:4px solid color-mix(in srgb,var(--accent) 80%, var(--card));border-top-left-radius:12px;border-bottom-left-radius:12px}
+                /* visible tab when tucked on left */
+                #${widgetId}.tucked-left{left:-24px;right:auto}
+                #${widgetId}.tucked-left .mw-handle{border-right:4px solid color-mix(in srgb,var(--accent) 80%, var(--card));border-top-right-radius:12px;border-bottom-right-radius:12px}
+                /* ensure bottom tuck remains visible */
+                #${widgetId}.tucked-bottom{bottom:12px}
                 @media (max-width:600px){ #${widgetId}{right:12px;bottom:12px} }
             `;
             document.head.appendChild(style);
@@ -610,7 +620,19 @@
             volInput.addEventListener('input', ()=>{ if(audio) audio.volume = parseFloat(volInput.value); });
 
             // Toggle controls on handle click (single click)
-            handle.addEventListener('click', (e)=>{ e.stopPropagation(); widget.classList.toggle('open'); });
+            handle.addEventListener('click', (e)=>{
+                e.stopPropagation();
+                // If tucked at the edge, bring it back into view first
+                if(widget.classList.contains('hidden-edge')){
+                    widget.classList.remove('hidden-edge');
+                    widget.style.left = 'auto';
+                    widget.style.right = '18px';
+                    // ensure controls open so user sees UI
+                    widget.classList.add('open');
+                    return;
+                }
+                widget.classList.toggle('open');
+            });
 
             // Dragging support
             let dragging = false; let startX=0, startY=0, origLeft=0, origTop=0;
@@ -636,6 +658,31 @@
                 // persist
                 const rect = widget.getBoundingClientRect();
                 try{ localStorage.setItem(storageKey, JSON.stringify({ x: rect.left, y: rect.top })); }catch(e){}
+
+                // If near left or right edge, tuck the widget (partially hidden)
+                const EDGE_THRESHOLD = 48; // px
+                const HIDE_OFFSET =  -24; // negative value for left/right to tuck (leave visible tab)
+                if(rect.left <= EDGE_THRESHOLD){
+                    widget.style.left = HIDE_OFFSET + 'px';
+                    widget.style.right = 'auto';
+                    widget.classList.add('hidden-edge');
+                    widget.classList.add('tucked-left');
+                    widget.classList.remove('tucked-right');
+                    // close controls when tucked
+                    widget.classList.remove('open');
+                } else if(rect.right >= window.innerWidth - EDGE_THRESHOLD){
+                    widget.style.left = 'auto';
+                    widget.style.right = HIDE_OFFSET + 'px';
+                    widget.classList.add('hidden-edge');
+                    widget.classList.add('tucked-right');
+                    widget.classList.remove('tucked-left');
+                    widget.classList.remove('open');
+                } else {
+                    // not near edge
+                    widget.classList.remove('hidden-edge');
+                    widget.classList.remove('tucked-left');
+                    widget.classList.remove('tucked-right');
+                }
             };
             document.addEventListener('pointerup', onPointerUp, { passive: false });
 
