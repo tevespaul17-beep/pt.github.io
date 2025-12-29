@@ -47,6 +47,7 @@
         .brand{display:flex;gap:12px;align-items:center}
         .logo{width:42px;height:42px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center;color:var(--card);font-weight:700}
         .navlinks{display:flex;gap:14px;align-items:center}
+        .menu-toggle{display:none;background:transparent;border:0;padding:8px;border-radius:8px;color:var(--muted);cursor:pointer;font-size:20px}
         .navlinks a{color:var(--muted);text-decoration:none;padding:8px;border-radius:8px;font-weight:600}
         .navlinks a.active{color:var(--accent);background:linear-gradient(90deg,transparent,rgba(0,0,0,0.03));}
         .theme-toggle{background:transparent;border:0;padding:8px;border-radius:8px;color:var(--muted);cursor:pointer}
@@ -69,7 +70,7 @@
         /* Card with photo */
         .card{background:var(--card);border-radius:14px;padding:18px;box-shadow:0 6px 20px rgba(2,6,23,0.06);border:1px solid rgba(0,0,0,0.03)}
         .avatar{width:100%;display:grid;place-items:center}
-        .avatar img{width:180px;height:180px;border-radius:14px;object-fit:cover;border:6px solid rgba(255,255,255,0.06);box-shadow:0 12px 30px rgba(2,6,23,0.25)}
+        .avatar img{width:180px;max-width:100%;height:auto;border-radius:14px;object-fit:cover;border:6px solid rgba(255,255,255,0.06);box-shadow:0 12px 30px rgba(2,6,23,0.25)}
         .quote{font-style:italic;color:var(--muted);margin-top:10px}
 
         section{padding:40px 0}
@@ -140,11 +141,18 @@
         /* Responsive */
         @media (max-width:900px){
             .hero{grid-template-columns:1fr;gap:20px}
+            .menu-toggle{display:inline-flex}
             .navlinks{display:none}
+            .navlinks.open{display:flex;flex-direction:column;position:fixed;top:66px;right:14px;padding:12px;gap:10px;background:var(--card);border-radius:12px;box-shadow:0 12px 30px rgba(2,6,23,0.12);border:1px solid rgba(0,0,0,0.06);z-index:60}
+            .navlinks.open a{padding:10px 14px}
+            .social-grid{flex-direction:column}
         }
         @media (max-width:600px){
             .container{padding:0 14px}
-            .thumb{display:none}
+            .thumb{width:100%;height:160px;display:block}
+            .grid-2{grid-template-columns:1fr}
+            form button.btn{width:100%}
+            .cta a{flex:1}
         }
 
         /* Subtle floating animation applied to panels and cards */
@@ -178,6 +186,7 @@
                         <div style="font-size:12px;color:var(--muted)">IT Student • Problem Solver</div>
                     </div>
                 </div>
+                <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu" aria-expanded="false">☰</button>
                 <div class="navlinks" id="navlinks">
                     <a href="#home" class="navlink active">Home</a>
                     <a href="#about" class="navlink">About</a>
@@ -427,7 +436,15 @@
             window.addEventListener('scroll', onScroll, {passive:true});
             onScroll();
             // Close mobile nav when link clicked
-            document.querySelectorAll('.navlink').forEach(a=>a.addEventListener('click', ()=>{ if(window.innerWidth<900){ /* reserved for mobile menu logic */ } }));
+            const navEl = document.getElementById('navlinks');
+            document.querySelectorAll('.navlink').forEach(a=>a.addEventListener('click', ()=>{ if(window.innerWidth<900 && navEl.classList.contains('open')){ navEl.classList.remove('open'); document.getElementById('menuToggle').setAttribute('aria-expanded','false'); } }));
+
+            // Mobile menu toggle button
+            const menuBtn = document.getElementById('menuToggle');
+            menuBtn.addEventListener('click', (e)=>{ e.stopPropagation(); navEl.classList.toggle('open'); const expanded = navEl.classList.contains('open'); menuBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false'); });
+
+            // Close mobile menu when clicking outside
+            document.addEventListener('click', (e)=>{ if(window.innerWidth<900 && !e.target.closest('#navlinks') && !e.target.closest('#menuToggle')){ navEl.classList.remove('open'); document.getElementById('menuToggle').setAttribute('aria-expanded','false'); } });
         })();
 
         // Contact form handler (no backend) - shows a friendly message
